@@ -2,4 +2,31 @@
 const SUPABASE_URL="https://htmwzsfokpaqngijxvs.supabase.co";const SUPABASE_PUBLISHABLE_KEY="sb_publishable_yttUXCprhMGAo2DN7Cly5A_yX2evxtO";const WHATSAPP_NUMBER="5548998507774";const $=id=>document.getElementById(id),money=n=>Number(n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});let products=[],cart=[];
 function render(){let q=$("search").value.toLowerCase(),cat=$("category").value,root=$("products");root.innerHTML="";products.filter(p=>p.active!==false&&(!cat||p.category===cat)&&(!q||[p.name,p.category,p.description].join(" ").toLowerCase().includes(q))).forEach(p=>{let d=document.createElement("article");d.className="card";d.innerHTML='<div class="pic">🥤</div><div class="cat"></div><div class="name"></div><div class="desc"></div><div class="price"></div><button>Adicionar</button>';d.querySelector(".cat").textContent=p.category||"Outros";d.querySelector(".name").textContent=p.name;d.querySelector(".desc").textContent=p.description||"";d.querySelector(".price").textContent=money(p.price);d.querySelector("button").onclick=()=>{let x=cart.find(x=>x.p.id===p.id);if(x)x.qty++;else cart.push({p,qty:1});renderCart()};if(p.image_url){let im=document.createElement("img");im.src=p.image_url;im.alt=p.name;im.style="width:100%;height:95px;object-fit:cover;border-radius:8px";d.querySelector(".pic").replaceWith(im)}root.appendChild(d)});if(!root.children.length)root.innerHTML='<div class="small">Nenhum produto encontrado.</div>'}
 function renderCart(){let n=cart.reduce((s,x)=>s+x.qty,0),t=cart.reduce((s,x)=>s+x.qty*Number(x.p.price||0),0);$("count").textContent=n;$("total").textContent=money(t);$("cartitems").textContent=cart.map(x=>`${x.qty} x ${x.p.name} — ${money(x.qty*x.p.price)}`).join("\n")||"Seu carrinho está vazio."}
-async function load(){if(!SUPABASE_URL.startsWith("https://")||SUPABASE_PUBLISHABLE_KEY.startsWith("COLE_AQUI")){$("status").textContent="Falta configurar a URL e a chave pública do Supabase no arquivo index.html.";return}try{let sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY),r=await sb.from("products").select("id,sku,name,category,description,image_url,price,active").eq("active",true).order("name");if(r.error)throw r.error;products=r.data||[];$("status").textContent=products.length+" produtos disponíveis";[...new Set(products.map(p=>p.category||"Outros"))].sort().forEach(c=>{let o=document.createElement("option");o.value=c;o.textContent=c;$("category").appendChild(o)});render()}catch(e){$("status").textContent="Não foi possível carregar os produtos. Confira a conexão e as permissões públicas.";console.error(e)}}$("search").oninput=render;$("category").onchange=render;$("clear").onclick=()=>{cart=[];renderCart()};$("send").onclick=()=>{if(!cart.length)return alert("Adicione produtos ao carrinho.");let name=$("customerName").value.trim(),address=$("customerAddress").value.trim();if(!name||!address)return alert("Preencha seu nome e endereço.");let t=cart.reduce((s,x)=>s+x.qty*Number(x.p.price||0),0),items=cart.map(x=>`• ${x.qty} x ${x.p.name} — ${money(x.qty*x.p.price)}`).join("\n"),msg=`Olá! Quero pedir na Seleto Conveniência.\nNome: ${name}\nEndereço: ${address}\n\nPedido:\n${items}\n\nSubtotal: ${money(t)}\nEntrega: R$ 5,00 em Capivari de Baixo (confirmar para outras cidades)\nPagamento: ${$("payment").value}\nConfirmo que tenho 18 anos ou mais caso o pedido contenha bebida alcoólica.`;window.open("https://wa.me/"+WHATSAPP_NUMBER+"?text="+encodeURIComponent(msg),"_blank")};load();</script></body></html>
+ async function load(){
+if(!SUPABASE_URL.startsWith("https://")||SUPABASE_PUBLISHABLE_KEY.startsWith("COLE_AQUI")){
+$("status").textContent="Falta configurar a URL e a chave pública do Supabase no arquivo index.html.";
+return;
+}
+try{
+let sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+let r=await sb.from("products").select("id,sku,name,category,description,image_url,price,active").eq("active",true).order("name");
+if(r.error)throw r.error;
+products=r.data||[];
+$("status").textContent=products.length+" produtos disponíveis";
+[...new Set(products.map(p=>p.category||"Outros"))].sort().forEach(c=>{
+let o=document.createElement("option");
+o.value=c;
+o.textContent=c;
+$("category").appendChild(o);
+});
+render();
+}catch(e){
+$("status").textContent="Erro ao carregar: "+(e.message||String(e));
+console.error(e);
+}
+}
+$("search").oninput=render;
+$("category").onchange=render;
+$("clear").onclick=()=>{cart=[];renderCart()};
+$("send").onclick=()=>{if(!cart.length)return alert("Adicione produtos ao carrinho.");let name=$("customerName").value.trim(),address=$("customerAddress").value.trim();if(!name||!address)return alert("Preencha seu nome e endereço.");let t=cart.reduce((s,x)=>s+x.qty*Number(x.p.price||0),0),items=cart.map(x=>`• ${x.qty} x ${x.p.name} — ${money(x.qty*x.p.price)}`).join("\n"),msg=`Olá! Quero pedir na Seleto Conveniência.\nNome: ${name}\nEndereço: ${address}\n\nPedido:\n${items}\n\nSubtotal: ${money(t)}\nEntrega: R$ 5,00 em Capivari de Baixo (confirmar para outras cidades)\nPagamento: ${$("payment").value}\nConfirmo que tenho 18 anos ou mais caso o pedido contenha bebida alcoólica.`;window.open("https://wa.me/"+WHATSAPP_NUMBER+"?text="+encodeURIComponent(msg),"_blank")};
+load(); 
